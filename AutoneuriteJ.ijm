@@ -1,3 +1,5 @@
+setBatchMode(true); //Start batch mode
+
 /*///This macro was created by Anne BEGHIN, Eric DENARIER and Benoit BOULAN
 This was performed on (Fiji Is Just) ImageJ 1.51h version
 
@@ -68,62 +70,51 @@ if (filesaver==1){									// verify if the macro has already been used is the c
 }
 
 ////////////////////////Launcher///////////////////////
-MacroPart=newArray("Part1","Part2","Part3");
+mainDir = "E:\\Experiments\\Primary_Cell_Culture\\Compound_Testing\\Cerebellum\\SC_SF_bpV\\3rd_Test\\2nd Replicate 110723\\Images\\Analysis\\From_TIFF\\dmso"; //getDirectory("Choose main directory"); 
+mainList = getFileList(mainDir); 
 
-Dialog.create("Welcome to AutoneuriteJ !");
-Dialog.addMessage("Part 1 : Image pre-treatment, before neuron segmentation \n Part 2 : Creation of a stack of isolated neurons from Part 1 processed images \n Part 3 : Neurites quantification and classification");
-Dialog.addChoice("Which part of the macro would you like to launch?", MacroPart, true);
-Dialog.show();
-Part=Dialog.getChoice();
+for (fileIndex=0; fileIndex<mainList.length; fileIndex++) {  /* for loop to parse through names in main folder*/ 
+    if(!endsWith(mainList[fileIndex], "/")){   /* if the name is not a subfolder...*/ 
+		continue;
+	}
 
-if (Part=="Part1") {
-/* This macro helps the segmentation of neurons and nuclei images.
-it asks parameter for the minimal size of a binarized neurons to remove debris.
-Asks for an average nuclei diameter. The specific character in the name of Neuron and nuclei images
-And the folder name were are the images.
-It saves :
-the original neuron images
-the binarized image 
-the binarized nuclei 
-in a new subfolder "resultats"
-*/
+//macro "AutoNeuriteJ Part I  [F1]" {
 
-macro "AutoNeuriteJ Part I  [F1]" {
+     
+	// RUNNING PART 1
+	/* This macro helps the segmentation of neurons and nuclei images.
+	it asks parameter for the minimal size of a binarized neurons to remove debris.
+	Asks for an average nuclei diameter. The specific character in the name of Neuron and nuclei images
+	And the folder name were are the images.
+	It saves :
+	the original neuron images
+	the binarized image 
+	the binarized nuclei 
+	in a new subfolder "resultats"
+	*/
+	
 
-/* 
-Dialog.create("Files names and parameter settings (AutoneuriteJ_Part1)");
-Dialog.addNumber("Original image pixel size (in µm):",Taille);
-Dialog.addString("Neuron image name must contain :","Cy3");
-Dialog.addNumber("Minimal area for a neuron (in pixels) ?",minNeuron_part1);
-Dialog.addString("Nucleus image name must contain ?","DAPI");
-Dialog.addNumber("Nucleus diameter (in pixels)",NucleusDiameter);
+	tubName="Alexa488";
+	Taille=0.3256;
+  // Original image pixel size (in micro meter)
+	minNeuron_part1=155; // Minimal area for a neuron (in pixels)
+	nucleiName="DAPI";
+ // Nucleus image name must contain
+	NucleusDiameter=30; // Nucleus diameter (in pixels)
 
-Dialog.show();
+	minDoG=1;
+	maxDoG=NucleusDiameter*3;
 
-tubName=Dialog.getString();
-Taille=Dialog.getNumber();
-minNeuron_part1=Dialog.getNumber();
-nucleiName=Dialog.getString();
-NucleusDiameter=Dialog.getNumber();
-*/
-
-tubName="changeme";   	// TODO: specify
-Taille=1.;  		// TODO: specify
-minNeuron_part1=1.;  	// TODO: specify
-NucleusDiameter=1.;  	// TODO: specify
-nucleiName="changeme";  // TODO: specify
-
-minDoG=1;
-maxDoG=NucleusDiameter*3;
-
-////////////////////////////////////////////Save the new parameters used/////////////////////////
-filesaver=File.exists(ParameterFile+"/AutoneuriteJ_settings.txt");
-if (filesaver==1){
-	File.delete(ParameterFile+"/AutoneuriteJ_settings");
-}
+	////////////////////////////////////////////Save the new parameters used/////////////////////////
+	filesaver=File.exists(ParameterFile+"/AutoneuriteJ_settings.txt");
+	if (filesaver==1){
+		File.delete(ParameterFile+"/AutoneuriteJ_settings");
+	}
+	
 	print("Log");
-	selectWindow("Log"); run("Close");
-		////Part1settings////
+	selectWindow("Log");
+	run("Close");
+	////Part1settings////
 	print(Taille); /// (1)
 	print(minNeuron_part1); /// (2)
 	print(NucleusDiameter); ///(3)
@@ -136,144 +127,133 @@ if (filesaver==1){
 	print(minNeurite); 	///(8)			
 	print(ratio); 		///(9)	
 	
-	selectWindow("Log"); saveAs("Text",ParameterFile+"/AutoneuriteJ_settings"); run("Close");
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	selectWindow("Log");
+	saveAs("Text",ParameterFile+"/AutoneuriteJ_settings");
+	run("Close");
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-NucleusSurface=NucleusDiameter/2*NucleusDiameter/2*PI;
-minNucleusSurface=NucleusSurface/3;
-maxNucleusSurface=NucleusSurface*3;
+	NucleusSurface=NucleusDiameter/2*NucleusDiameter/2*PI;
+	minNucleusSurface=NucleusSurface/3;
+	maxNucleusSurface=NucleusSurface*3;
 
-rep=getDirectory("Image Folder ?");
-nomrep=File.getName(rep);
-liste=getFileList(rep);
-File.makeDirectory(rep+"\\resultats_"+nomrep+"\\");
-newRep=rep+"\\resultats_"+nomrep+"\\";
-
-
-
-for (i=0;i<liste.length;i++) 
-	{
-	setBatchMode(true);	
 	
-	if (indexOf(liste[i], nucleiName)!=-1)
+	rep=mainDir + "\\" + mainList[fileIndex];
+	nomrep=File.getName(rep);
+	liste=getFileList(rep);
+	File.makeDirectory(rep+"\\resultats_"+nomrep+"\\");
+	newRep=rep+"\\resultats_"+nomrep+"\\";
+	
+	for (i=0;i<liste.length;i++) 
 		{
-  			open(rep+liste[i]);
-		getPixelSize(unite, pixelWidth, pixelHeight);
-		title=getTitle();
-		if(Taille!=pixelWidth){
-			// TODO: is this the line to delete?
-			waitForUser("Original image pixel size do not match with metadata value. \n Please reset original pixel size in properties.");
-			run("Properties...", "unit="+unite+" pixel_width="+pixelWidth+" pixel_height="+pixelHeight);
-			run("Properties...");
-			getPixelSize(unite2, pixelWidth2, pixelHeight2);
-			print("Original pixel size manually reset from "+pixelWidth+" "+unite+" to "+pixelWidth2+" "+unite2);
-		}
-		else{
+		setBatchMode(true);	
+		
+		if (indexOf(liste[i], nucleiName)!=-1)
+			{
+	  			open(rep+liste[i]);
+			getPixelSize(unite, pixelWidth, pixelHeight);
+			title=getTitle();
+			
 			unite2=unite;
 			pixelWidth2=pixelWidth;
-		}
-		run("Set Scale...", "distance=0 known=0 pixel=1 unit=pixel");	
+
+			if(Taille!=pixelWidth){
+				//waitForUser("Original image pixel size do not match with metadata value. \n Please reset original pixel size in properties.");run("Properties...", "unit="+unite+" pixel_width="+pixelWidth+" pixel_height="+pixelHeight);
+				run("Properties...");
+				getPixelSize(unite2, pixelWidth2, pixelHeight2);
+				print("Original pixel size manually reset from "+pixelWidth+" "+unite+" to "+pixelWidth2+" "+unite2);
+			}
+			run("Set Scale...", "distance=0 known=0 pixel=1 unit=pixel");	
+		
+			getDimensions(width, height, channels, slices, frames);
+			xsize=width*Taille;
+			ysize=height*Taille;
 	
-		getDimensions(width, height, channels, slices, frames);
-		xsize=width*Taille;
-		ysize=height*Taille;
-
-
-		filter (title, "Gaussian Blur", "Gaussian Blur", NucleusDiameter/4, NucleusDiameter*4);  
-
-		setAutoThreshold("Default dark");
-
-		setBatchMode(false);
-		run("Threshold...");
-		waitForUser("Set the threshold for nuclei : \n You may do nothing !!!\n Zoom in to see better !!!");
-		setBatchMode(true);
-		setOption("BlackBackground", true);
-		run("Convert to Mask");
-		run("Watershed");
-		run("Analyze Particles...", "size=&minNucleusSurface-&maxNucleusSurface circularity=0.5-1.00 show=Masks exclude in_situ");
-		title=File.nameWithoutExtension;
-		run("Scale...", "x=Taille y=Taille width="+xsize+" height="+ysize+"  interpolation=Bilinear create");
-		run("Multiply...", "value=256.000");
-		saveAs("tiff",newRep+"Nucleus_Bin_"+title); close();close();
-
-	}
-
-	if (indexOf(liste[i], tubName)!=-1)
-		{
-		open(rep+liste[i]);
-		
-		
-		title=File.nameWithoutExtension;
-		getPixelSize(unite, pixelWidth, pixelHeight);
-		getDimensions(width, height, channels, slices, frames);
-		
-		if(Taille!=pixelWidth){
-			waitForUser("Original pixel size do not match with metadata value. \n Please reset original pixel size in properties.");run("Properties...", "unit="+unite+" pixel_width="+pixelWidth+" pixel_height="+pixelHeight);
-			run("Properties...");
-			getPixelSize(unite2, pixelWidth2, pixelHeight2);
+	
+			filter (title, "Gaussian Blur", "Gaussian Blur", NucleusDiameter/4, NucleusDiameter*4);  
+	
+			setAutoThreshold("Default dark");
+	
+			setBatchMode(false);
+			run("Threshold...");
+			waitForUser("Set the threshold for nuclei : \n You may do nothing !!!\n Zoom in to see better !!!");
+			setBatchMode(true);
+			setOption("BlackBackground", true);
+			run("Convert to Mask");
+			run("Watershed");
+			run("Analyze Particles...", "size=&minNucleusSurface-&maxNucleusSurface circularity=0.5-1.00 show=Masks exclude in_situ");
+			title=File.nameWithoutExtension;
+			run("Scale...", "x=Taille y=Taille width="+xsize+" height="+ysize+"  interpolation=Bilinear create");
+			run("Multiply...", "value=256.000");
+			saveAs("tiff",newRep+"Nucleus_Bin_"+title); close();close();
+	
 		}
-		else{
-			unite2=unite;
-			pixelWidth2=pixelWidth;
+	
+		if (indexOf(liste[i], tubName)!=-1)
+			{
+			open(rep+liste[i]);
+			
+			
+			title=File.nameWithoutExtension;
+			getPixelSize(unite, pixelWidth, pixelHeight);
+			getDimensions(width, height, channels, slices, frames);
+			
+			if(Taille!=pixelWidth){
+				waitForUser("Original pixel size do not match with metadata value. \n Please reset original pixel size in properties.");run("Properties...", "unit="+unite+" pixel_width="+pixelWidth+" pixel_height="+pixelHeight);
+				run("Properties...");
+				getPixelSize(unite2, pixelWidth2, pixelHeight2);
+			}
+			else{
+				unite2=unite;
+				pixelWidth2=pixelWidth;
+			}
+			run("Set Scale...", "distance=0 known=0 pixel=1 unit=pixel");		
+			xsize=width*Taille;
+			ysize=height*Taille;
+		 
+	
+			run("Scale...", "x=Taille y=Taille width="+xsize+" height="+ysize+"  interpolation=Bilinear create");
+			saveAs("tiff",newRep+"Neuron_"+title);
+			close();
+			title=getTitle();
+		 
+			filter (title,"Median","Gaussian Blur",minDoG,maxDoG);
+			setAutoThreshold("Triangle dark");	
+	
+			setBatchMode(false);
+			run("Threshold...");
+			waitForUser("Set the threshold for Neurons");
+			setBatchMode(true);
+			setOption("BlackBackground", true);
+			run("Convert to Mask");
+			run("Analyze Particles...", "size=&minNeuron_part1-1000000 circularity=0-0.5 show=Masks exclude in_situ");
+			getDimensions(width, height, channels, slices, frames);
+			
+			xsize=width*Taille;
+			ysize=height*Taille;
+			run("Scale...", "x=Taille y=Taille width="+xsize+" height="+ysize+"  interpolation=Bilinear create");
+			run("Multiply...", "value=2500.000");
+			saveAs("tiff",newRep+"NeuronBin_"+nomrep); close(); close();
+	
 		}
-		run("Set Scale...", "distance=0 known=0 pixel=1 unit=pixel");		
-		xsize=width*Taille;
-		ysize=height*Taille;
-	 
-
-		run("Scale...", "x=Taille y=Taille width="+xsize+" height="+ysize+"  interpolation=Bilinear create");
-		saveAs("tiff",newRep+"Neuron_"+title);
-		close();
-		title=getTitle();
-	 
-		filter (title,"Median","Gaussian Blur",minDoG,maxDoG);
-		setAutoThreshold("Triangle dark");	
-
-		setBatchMode(false);
-		run("Threshold...");
-		waitForUser("Set the threshold for Neurons");
-		setBatchMode(true);
-		setOption("BlackBackground", true);
-		run("Convert to Mask");
-		run("Analyze Particles...", "size=&minNeuron_part1-1000000 circularity=0-0.5 show=Masks exclude in_situ");
-		getDimensions(width, height, channels, slices, frames);
-		
-		xsize=width*Taille;
-		ysize=height*Taille;
-		run("Scale...", "x=Taille y=Taille width="+xsize+" height="+ysize+"  interpolation=Bilinear create");
-		run("Multiply...", "value=2500.000");
-		saveAs("tiff",newRep+"NeuronBin_"+nomrep); close(); close();
-
 	}
-} /// End of liste length
-print("Original pixel size :"+pixelWidth2+" "+unite2);
-print("Image scaling factor =" + Taille);
-print("Quantification pixel size =" + pixelWidth2*(1/Taille) +" "+unite2);
-print("Minimal area for a neuron (in pixels) : "  +minNeuron_part1);
-print("Nucleus diameter (in pixels) : " +NucleusDiameter);			
-print("Filter size for neuron segmentation  : Median blur (pxl)="+minDoG+" and Gaussian blur (pxl)="+maxDoG);
-selectWindow("Log"); saveAs("Text",newRep+"Part I-settings_of_"+nomrep); run("Close");	
-} /// End of macro part 1
-}
+	print("Original pixel size :"+pixelWidth2+" "+unite2);
+	print("Image scaling factor =" + Taille);
+	print("Quantification pixel size =" + pixelWidth2*(1/Taille) +" "+unite2);
+	print("Minimal area for a neuron (in pixels) : "  +minNeuron_part1);
+	print("Nucleus diameter (in pixels) : " +NucleusDiameter);			
+	print("Filter size for neuron segmentation  : Median blur (pxl)="+minDoG+" and Gaussian blur (pxl)="+maxDoG);
+	selectWindow("Log"); saveAs("Text",newRep+"Part I-settings_of_"+nomrep); run("Close");	
+//}
 
-if (Part=="Part2") {
- macro "AutoNeuriteJ Part II [F1]" {
- /////////////////////////////// Some parameters to be tuned.
- 
-/* Dialog.create("Parameter settings(AutoneuriteJ_Part2)");
-Dialog.addNumber("Minimal area for a binary Neuron (in pixels) :",minNeuron_part2);
-Dialog.addNumber("Minimal skeleton length of a neuritic tree (in pixels) :",minNeuriticTree);
-Dialog.addNumber("Minimal total skeleton length to consider a neuron (in pixels) :",minLengthSkelet);
-Dialog.show();
+//macro "AutoNeuriteJ Part II [F1]" {
+/////////////////////////////// Some parameters to be tuned.
 
-minNeuron_part2=Dialog.getNumber();
-minNeuriticTree=Dialog.getNumber();
-minLengthSkelet=Dialog.getNumber();
-*/
-
-minNeuron_part2=1.;  // TODO: specify
-minNeuriticTree=1.;  // TODO: specify
-minLengthSkelet=1.;  // TODO: specify
+minNeuron_part2=155;
+ // Minimal skeleton length of a neuritic tree (in pixels)
+minNeuriticTree=30;
+  // Minimal skeleton length of a neuritic tree (in pixels)
+minLengthSkelet=30;
+  // Minimal total skeleton length to consider a neuron (in pixels)
 
 ////////////////////////////////////////////Save the new parameters used/////////////////////////
 filesaver=File.exists(ParameterFile+"/AutoneuriteJ_settings.txt");
@@ -281,21 +261,21 @@ if (filesaver==1){
 	File.delete(ParameterFile+"/AutoneuriteJ_settings");
 		////Part1settings////
 }
-	print("Log");
-	selectWindow("Log"); run("Close");
-	print(Taille); /// (1)
-	print(minNeuron_part1); /// (2)
-	print(NucleusDiameter); ///(3)
-	////Part2_settings////
-	print(minNeuriticTree); // (4) 
-	print(minNeuron_part2);  // (5)
-	print(minLengthSkelet); // (6) 
-	////Part3 settings////
-	print(minAxon); 	///(7)			
-	print(minNeurite); 	///(8)			
-	print(ratio); 		///(9)	
-	
-	selectWindow("Log"); saveAs("Text",ParameterFile+"/AutoneuriteJ_settings"); run("Close");
+print("Log");
+selectWindow("Log"); run("Close");
+print(Taille); /// (1)
+print(minNeuron_part1); /// (2)
+print(NucleusDiameter); ///(3)
+////Part2_settings////
+print(minNeuriticTree); // (4) 
+print(minNeuron_part2);  // (5)
+print(minLengthSkelet); // (6) 
+////Part3 settings////
+print(minAxon); 	///(7)			
+print(minNeurite); 	///(8)			
+print(ratio); 		///(9)	
+
+selectWindow("Log"); saveAs("Text",ParameterFile+"/AutoneuriteJ_settings"); run("Close");
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////// 
  
@@ -304,8 +284,7 @@ if (filesaver==1){
  setBatchMode(true);	
  
 //////////////////////////stack opening 
-//nombre_condition=getNumber("How many conditions do you have to analyze?", defaultValue);
-nombre_condition=1;  // TODO: specify
+nombre_condition=1;
  // Ask for the number of stack to be analysed
 path=newArray(nombre_condition);
 list=newArray(20);
@@ -315,7 +294,7 @@ list=newArray(20);
 
 	
 for (e=0; e<nombre_condition; e++) {                   // Ask for the directory of each stack to be analysed.
-	path[e] = getDirectory("Choose a Directory");
+	path[e] = newRep;
 }
 	
 for (e=0; e<nombre_condition; e++) {                                          // Files opening
@@ -525,20 +504,22 @@ for (e=0; e<nombre_condition; e++) {                                          //
 	print ("Number of isolated neurons considered:   "+number_Neurons-SkelettooShort);		
 	selectWindow("Log"); saveAs("Text", sauvegarde+"/Part II-settings and neurons_count"); run("Close");			
 
+	
+	part2ResultFolder=sauvegarde+"/r_"+title2;
 	selectWindow("Stack_BodySkelet");run("Remove Overlay");
-	saveAs("tiff",sauvegarde+"/r_"+title2+"/Stack_BodySkelet"); close();
+	saveAs("tiff",part2ResultFolder+"/Stack_BodySkelet"); close();
 
 	selectWindow("Stack_Body");
-	saveAs("tiff",sauvegarde+"/r_"+title2+"/Stack_Body"); close();
+	saveAs("tiff",part2ResultFolder+"/Stack_Body"); close();
 
 	selectWindow("Stack_Neuron");run("Remove Overlay");
-	saveAs("tiff",sauvegarde+"/r_"+title2+"/Stack_Neuron_Bin"); close();
+	saveAs("tiff",part2ResultFolder+"/Stack_Neuron_Bin"); close();
 
 	selectWindow("Stack_Neuron_Original");run("Remove Overlay");
-	saveAs("tiff",sauvegarde+"/r_"+title2+"/Stack_Neuron_Original"); close();
+	saveAs("tiff",part2ResultFolder+"/Stack_Neuron_Original"); close();
 
 	selectWindow("Stack_NoBodySkelet");run("Remove Overlay");
-	saveAs("tiff",sauvegarde+"/r_"+title2+"/Stack_NoBodySkelet"); close();
+	saveAs("tiff",part2ResultFolder+"/Stack_NoBodySkelet"); close();
 
 	call("java.lang.System.gc");    //////Cleans the memory
 								
@@ -566,31 +547,26 @@ minTotal=minSpent-(hourTotal*60);
 
 print ("program ran for : "+hourTotal+"h"+minTotal+"min");
  
-} // End of macro part II
-}
+//} // End of macro part II
 
-if (Part=="Part3") {
-macro "AutoNeuriteJ_partIII [F1]" {
+
+//macro "AutoNeuriteJ_partIII [F1]" {
 //////////////////////// Different measures : neurone cell body expansion /////////////////////////////////////////////////////
 //////////////////////////////////Parameters/////////////////////////////////////////
 
 getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour0, minute0, second0, msec);
 
 //////////////////////////stack opening 
-defaultValue=1;
-nombre_condition=getNumber("How many conditions to analyze?", defaultValue);
- // Ask for the number of stack to be analysed
+nombre_condition=1;
 path=newArray(nombre_condition);
 list=newArray(20);
-	
-Dialog.create("Parameter settings (AutoneuriteJ_Part2)");
-Dialog.addNumber("Minimal size for a Neurite (in pixels)",minNeurite);
-Dialog.addNumber("Minimal size for an Axon (in pixels)",minAxon);
-Dialog.addNumber("Ratio (Axon Length)/(Longest Primary Neurites length) to be an Axon",ratio);
-Dialog.show();
-minNeurite=Dialog.getNumber();
-minAxon=Dialog.getNumber();
-ratio=Dialog.getNumber();
+
+minNeurite=30;  // Minimal size for a Neurite (in pixels)  
+minAxon=100
+;    // Minimal size for an Axon (in pixels)
+ratio=2.;
+       // Ratio (Axon Length)/(Longest Primary Neurites length) to be an Axon
+
 
 ////////////////////////////////////////////Save the new parameters used/////////////////////////
 filesaver=File.exists(ParameterFile+"/AutoneuriteJ_settings.txt");
@@ -617,7 +593,7 @@ if (filesaver==1){
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
 for (e=0; e<nombre_condition; e++) {                   // Ask for the directory of each stack to be analysed.
-	path[e] = getDirectory("Choose a Directory");
+	path[e] = part2ResultFolder;
 }
 	
 for (e=0; e<nombre_condition; e++) {                                          // Files opening
@@ -1003,8 +979,10 @@ minTotal=minSpent-(hourTotal*60);
 secTotal=secSpent-(minTotal*60);
 print ("program ran for : "+hourTotal+"h"+minTotal+"min"+secTotal+"sec");
 	
-} // End of Macro part 3
+//} // End of Macro part 3
 
+
+} // end for all files
 
 }
 
@@ -1075,6 +1053,7 @@ function getPositions(image,z){
 	getSelectionBounds(Xpos, Ypos, width, height);
 	centerROI[0]=(Xpos+width/2); centerROI[1]=(Ypos+height/2);
 	return centerROI;
-}	
-//////////////////////////////END of macro AutoneurJ (all in one)	
 }
+//////////////////////////////END of macro AutoneurJ (all in one)	
+
+setBatchMode(false); //End batch mode
