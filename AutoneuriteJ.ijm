@@ -155,12 +155,12 @@ for (fileIndex=0; fileIndex<mainList.length; fileIndex++) {  /* for loop to pars
 			
 			unite2=unite;
 			pixelWidth2=pixelWidth;
-
+			
 			if(Taille!=pixelWidth){
 				//waitForUser("Original image pixel size do not match with metadata value. \n Please reset original pixel size in properties.");run("Properties...", "unit="+unite+" pixel_width="+pixelWidth+" pixel_height="+pixelHeight);
-				run("Properties...");
+				//run("Properties...");
 				getPixelSize(unite2, pixelWidth2, pixelHeight2);
-				print("Original pixel size manually reset from "+pixelWidth+" "+unite+" to "+pixelWidth2+" "+unite2);
+				//print("Original pixel size manually reset from "+pixelWidth+" "+unite+" to "+pixelWidth2+" "+unite2);
 			}
 			run("Set Scale...", "distance=0 known=0 pixel=1 unit=pixel");	
 		
@@ -171,12 +171,13 @@ for (fileIndex=0; fileIndex<mainList.length; fileIndex++) {  /* for loop to pars
 	
 			filter (title, "Gaussian Blur", "Gaussian Blur", NucleusDiameter/4, NucleusDiameter*4);  
 	
-			setAutoThreshold("Default dark");
+			//setAutoThreshold("Default dark");
+			setThreshold(100,60000);
 	
-			setBatchMode(false);
-			run("Threshold...");
-			waitForUser("Set the threshold for nuclei : \n You may do nothing !!!\n Zoom in to see better !!!");
-			setBatchMode(true);
+			//setBatchMode(false);
+			//run("Threshold...");
+			//waitForUser("Set the threshold for nuclei : \n You may do nothing !!!\n Zoom in to see better !!!");
+			//setBatchMode(true);
 			setOption("BlackBackground", true);
 			run("Convert to Mask");
 			run("Watershed");
@@ -197,14 +198,12 @@ for (fileIndex=0; fileIndex<mainList.length; fileIndex++) {  /* for loop to pars
 			getPixelSize(unite, pixelWidth, pixelHeight);
 			getDimensions(width, height, channels, slices, frames);
 			
+			unite2=unite;
+			pixelWidth2=pixelWidth;
 			if(Taille!=pixelWidth){
-				waitForUser("Original pixel size do not match with metadata value. \n Please reset original pixel size in properties.");run("Properties...", "unit="+unite+" pixel_width="+pixelWidth+" pixel_height="+pixelHeight);
-				run("Properties...");
+				//waitForUser("Original pixel size do not match with metadata value. \n Please reset original pixel size in properties.");run("Properties...", "unit="+unite+" pixel_width="+pixelWidth+" pixel_height="+pixelHeight);
+				//run("Properties...");
 				getPixelSize(unite2, pixelWidth2, pixelHeight2);
-			}
-			else{
-				unite2=unite;
-				pixelWidth2=pixelWidth;
 			}
 			run("Set Scale...", "distance=0 known=0 pixel=1 unit=pixel");		
 			xsize=width*Taille;
@@ -217,12 +216,14 @@ for (fileIndex=0; fileIndex<mainList.length; fileIndex++) {  /* for loop to pars
 			title=getTitle();
 		 
 			filter (title,"Median","Gaussian Blur",minDoG,maxDoG);
-			setAutoThreshold("Triangle dark");	
+			//setAutoThreshold("Triangle dark");	
 	
-			setBatchMode(false);
-			run("Threshold...");
-			waitForUser("Set the threshold for Neurons");
-			setBatchMode(true);
+		setThreshold(100, 60000);
+	
+			//setBatchMode(false);
+			//run("Threshold...");
+			//waitForUser("Set the threshold for Neurons");
+			//setBatchMode(true);
 			setOption("BlackBackground", true);
 			run("Convert to Mask");
 			run("Analyze Particles...", "size=&minNeuron_part1-1000000 circularity=0-0.5 show=Masks exclude in_situ");
