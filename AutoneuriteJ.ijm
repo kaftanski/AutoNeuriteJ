@@ -87,10 +87,10 @@ the binarized image
 the binarized nuclei 
 in a new subfolder "resultats"
 */
+
 macro "AutoNeuriteJ Part I  [F1]" {
 
-
-
+/* 
 Dialog.create("Files names and parameter settings (AutoneuriteJ_Part1)");
 Dialog.addNumber("Original image pixel size (in µm):",Taille);
 Dialog.addString("Neuron image name must contain :","Cy3");
@@ -105,6 +105,13 @@ Taille=Dialog.getNumber();
 minNeuron_part1=Dialog.getNumber();
 nucleiName=Dialog.getString();
 NucleusDiameter=Dialog.getNumber();
+*/
+
+tubName="changeme";   	// TODO: specify
+Taille=1.;  		// TODO: specify
+minNeuron_part1=1.;  	// TODO: specify
+NucleusDiameter=1.;  	// TODO: specify
+nucleiName="changeme";  // TODO: specify
 
 minDoG=1;
 maxDoG=NucleusDiameter*3;
@@ -154,7 +161,9 @@ for (i=0;i<liste.length;i++)
 		getPixelSize(unite, pixelWidth, pixelHeight);
 		title=getTitle();
 		if(Taille!=pixelWidth){
-			waitForUser("Original image pixel size do not match with metadata value. \n Please reset original pixel size in properties.");run("Properties...", "unit="+unite+" pixel_width="+pixelWidth+" pixel_height="+pixelHeight);
+			// TODO: is this the line to delete?
+			waitForUser("Original image pixel size do not match with metadata value. \n Please reset original pixel size in properties.");
+			run("Properties...", "unit="+unite+" pixel_width="+pixelWidth+" pixel_height="+pixelHeight);
 			run("Properties...");
 			getPixelSize(unite2, pixelWidth2, pixelHeight2);
 			print("Original pixel size manually reset from "+pixelWidth+" "+unite+" to "+pixelWidth2+" "+unite2);
@@ -251,7 +260,7 @@ if (Part=="Part2") {
  macro "AutoNeuriteJ Part II [F1]" {
  /////////////////////////////// Some parameters to be tuned.
  
-Dialog.create("Parameter settings(AutoneuriteJ_Part2)");
+/* Dialog.create("Parameter settings(AutoneuriteJ_Part2)");
 Dialog.addNumber("Minimal area for a binary Neuron (in pixels) :",minNeuron_part2);
 Dialog.addNumber("Minimal skeleton length of a neuritic tree (in pixels) :",minNeuriticTree);
 Dialog.addNumber("Minimal total skeleton length to consider a neuron (in pixels) :",minLengthSkelet);
@@ -260,6 +269,11 @@ Dialog.show();
 minNeuron_part2=Dialog.getNumber();
 minNeuriticTree=Dialog.getNumber();
 minLengthSkelet=Dialog.getNumber();
+*/
+
+minNeuron_part2=1.;  // TODO: specify
+minNeuriticTree=1.;  // TODO: specify
+minLengthSkelet=1.;  // TODO: specify
 
 ////////////////////////////////////////////Save the new parameters used/////////////////////////
 filesaver=File.exists(ParameterFile+"/AutoneuriteJ_settings.txt");
@@ -290,8 +304,8 @@ if (filesaver==1){
  setBatchMode(true);	
  
 //////////////////////////stack opening 
-defaultValue=1;
-nombre_condition=getNumber("How many conditions do you have to analyze?", defaultValue);
+//nombre_condition=getNumber("How many conditions do you have to analyze?", defaultValue);
+nombre_condition=1;  // TODO: specify
  // Ask for the number of stack to be analysed
 path=newArray(nombre_condition);
 list=newArray(20);
